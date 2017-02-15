@@ -9,7 +9,7 @@ Editor:	http://www.visualmicro.com
 
 #include <OneWire.h>
 
-OneWire  ds(10);
+OneWire  ds(8);
 
 DS18B20::DS18B20()
 {
@@ -29,6 +29,7 @@ void DS18B20::romAddr()
 	}
 	else
 	{
+		
 		for (byte a = 0;a < 8;a++) //将地址数据存入私有变量
 		{
 			_ADDR[a] = addr[a];
@@ -39,21 +40,19 @@ void DS18B20::romAddr()
 void DS18B20::romAddr(byte *ADDR)
 {
 	byte addr[8];
-	if (!ds.search(addr))
-	{
-		ds.reset_search();
-	}
-	else
-	{
-		for (byte a = 0;a<8;a++)
+		if (!ds.search(addr))
 		{
-			*(ADDR + a) = addr[a];
+			ds.reset_search();
 		}
-		for (byte a = 0;a < 8;a++) //将地址数据存入私有变量
+		else
 		{
-			_ADDR[a] = ADDR[a];
+			for (byte a = 0;a<8;a++)
+			{
+				*(ADDR + a) = addr[a];
+				_ADDR[a] = addr[a];
+			}	
+
 		}
-	}
 }
 
 void DS18B20::detection()
@@ -63,8 +62,6 @@ void DS18B20::detection()
 	ds.reset();  //复位总线
 	ds.select(_ADDR);  //选择地址
 	ds.write(0x44, 1);        // 写一个字节并且加电
-
-							  /*注意:此传感器需要1000ms运行时间*/
 }
 
 float DS18B20::readTemperature()
@@ -73,10 +70,12 @@ float DS18B20::readTemperature()
 	ds.reset();   //复位总线
 	ds.select(_ADDR);     //选择地址设备
 	ds.write(0xBE);         // Read Scratchpad
+	
 	for (byte i = 0; i < 9; i++) // we need 9 bytes
 	{
 		data[i] = ds.read();
 	}
+	
 	int16_t raw = (data[1] << 8) | data[0];
 	byte cfg = (data[4] & 0x60);
 	// at lower res, the low bits are undefined, so let's zero them
